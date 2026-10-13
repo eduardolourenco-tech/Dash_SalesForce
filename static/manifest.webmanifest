@@ -1,0 +1,24 @@
+{
+  "name": "FSL Campo — Centro de Controle",
+  "short_name": "FSL Campo",
+  "description": "Acompanhamento móvel da operação FTTH e ICOMON em campo.",
+  "lang": "pt-BR",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "orientation": "portrait-primary",
+  "background_color": "#06090f",
+  "theme_color": "#0d9488",
+  "categories": ["business", "productivity"],
+  "icons": [
+    { "src": "/static/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/static/icon-maskable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Produção Norte", "short_name": "Norte", "url": "/?regiao=NORTE&tela=PRODUCAO" },
+    { "name": "Produção Sul", "short_name": "Sul", "url": "/?regiao=SUL&tela=PRODUCAO" },
+    { "name": "Cockpit de Reparos", "short_name": "Reparos", "url": "/?tela=REPAROS" },
+    { "name": "Ofensores Zerados", "short_name": "Zerados", "url": "/?tela=ZERADOS" }
+  ]
+}

@@ -1,0 +1,1378 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta id="meta_viewport" name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0d9488">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="FSL Campo">
+  <link rel="manifest" href="/static/manifest.webmanifest">
+  <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/static/icon.svg">
+  <title>Centro de Controle - FTTH & ICOMON</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    :root {
+      --bg-base: #06090f;
+      --bg-surface: #0d121c;
+      --bg-card: #131a28;
+      --border: #1e293b;
+      --border-light: #2a374d;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent-blue: #38bdf8;
+      --accent-green: #10b981;
+      --accent-yellow: #fbbf24;
+      --accent-red: #ef4444;
+      --accent-purple: #8b5cf6;
+      --accent-orange: #f97316;
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg-base); }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+    html, body {
+      width: 100vw; height: 100vh; overflow: hidden;
+      background-color: var(--bg-base); color: var(--text-main);
+      font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased;
+    }
+    body { display: flex; }
+
+    #sidebar {
+      width: 320px; min-width: 320px; height: 100vh;
+      background: rgba(13, 18, 28, 0.95); backdrop-filter: blur(12px);
+      border-right: 1px solid var(--border); box-shadow: 4px 0 24px rgba(0,0,0,0.5);
+      display: flex; flex-direction: column; gap: 12px; padding: 16px;
+      overflow-y: auto; transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 500;
+    }
+    #sidebar.hidden { margin-left: -320px; }
+
+    .brand-box {
+      display: flex; align-items: center; justify-content: space-between;
+      padding-bottom: 12px; border-bottom: 1px solid var(--border);
+    }
+    .brand-box h2 {
+      font-size: 13px; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 0.5px; color: #FFF; display: flex; align-items: center; gap: 10px;
+    }
+
+    .btn-toggle-panel {
+      background: var(--bg-card); border: 1px solid var(--border);
+      color: var(--text-muted); border-radius: 8px; cursor: pointer;
+      padding: 6px 10px; font-size: 12px; transition: all 0.2s ease;
+    }
+    .btn-toggle-panel:hover { color: #FFF; border-color: var(--accent-blue); background: rgba(56, 189, 248, 0.1); }
+
+    .status-badge {
+      padding: 8px 12px; border-radius: 8px; background: rgba(30, 41, 59, 0.5);
+      border: 1px solid var(--border); font-size: 11px; font-weight: 600;
+      text-align: center; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;
+    }
+
+    .btn-action {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 10px; border-radius: 8px; font-size: 11.5px; font-weight: 700;
+      text-transform: uppercase; border: none; cursor: pointer; transition: all 0.2s ease;
+    }
+    .btn-action:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+    .btn-action:active { transform: translateY(1px); }
+    .btn-primary { background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); color: #FFF; }
+    .btn-secondary { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border: 1px solid var(--border-light); color: var(--text-main); }
+
+    .control-group { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+    .control-group label { font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); }
+    select, input {
+      background-color: rgba(15, 23, 42, 0.6); color: var(--text-main);
+      border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px;
+      font-size: 11.5px; font-weight: 500; outline: none; transition: all 0.2s ease;
+    }
+    select:focus, input:focus { border-color: var(--accent-blue); }
+
+    .regional-toggle {
+      display: flex; background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+    }
+    .reg-btn {
+      flex: 1; padding: 8px 0; text-align: center; font-size: 11px; font-weight: 800;
+      text-transform: uppercase; color: var(--text-muted); background: transparent;
+      border: none; cursor: pointer; transition: all 0.2s ease;
+    }
+    .reg-btn.active.norte { background: var(--accent-blue); color: #fff; }
+    .reg-btn.active.sul { background: var(--accent-red); color: #fff; }
+
+    #content {
+      flex: 1; height: calc(100vh - 40px); padding: 16px 24px;
+      display: flex; flex-direction: column; overflow: hidden;
+      background: radial-gradient(circle at 50% 0%, #111827 0%, var(--bg-base) 100%);
+    }
+
+    .top-bar-controls { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .top-bar-left { display: flex; align-items: center; gap: 12px; }
+
+    .screen-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 12px; flex-shrink: 0; background: rgba(15, 23, 42, 0.4);
+      padding: 12px 16px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05);
+    }
+    .screen-title { font-size: 16px; font-weight: 900; text-transform: uppercase; display: flex; align-items: center; gap: 10px; }
+
+    .kpi-deck { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 12px; flex-shrink: 0; }
+    .kpi-card {
+      background: linear-gradient(180deg, var(--bg-surface) 0%, rgba(13, 18, 28, 0.8) 100%);
+      border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px;
+      display: flex; flex-direction: column; gap: 4px; position: relative; overflow: hidden;
+    }
+    .kpi-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    }
+    .kpi-card.b-blue { border-bottom: 3px solid var(--accent-blue); }
+    .kpi-card.b-red { border-bottom: 3px solid var(--accent-red); }
+    .kpi-card.b-purple { border-bottom: 3px solid var(--accent-purple); }
+    .kpi-card.b-yellow { border-bottom: 3px solid var(--accent-yellow); }
+    .kpi-card.b-green { border-bottom: 3px solid var(--accent-green); }
+
+    .kpi-label { font-size: 10px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; }
+    .kpi-val { font-size: 24px; font-weight: 900; font-family: 'JetBrains Mono', monospace; color: #FFF; line-height: 1; margin-top: 2px; }
+    .kpi-sub { font-size: 12px; font-weight: 700; color: #FFF; font-family: 'JetBrains Mono', monospace; }
+
+    /* CORREÇÃO DO SCROLL: overflow-y ativado com cabeçalho sticky */
+    .table-container-flex {
+      flex: 1; min-height: 0; background: rgba(13, 18, 28, 0.7);
+      border: 1px solid var(--border); border-radius: 10px;
+      display: flex; flex-direction: column; overflow-y: auto !important; overflow-x: auto; backdrop-filter: blur(8px);
+    }
+    .smart-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    .smart-table thead { position: sticky; top: 0; z-index: 20; }
+    .smart-table th {
+      background-color: #0d1424; color: #94a3b8; font-size: 11px;
+      font-weight: 800; text-transform: uppercase; padding: 10px 12px;
+      border-bottom: 1px solid var(--border-light); white-space: nowrap;
+    }
+    .smart-table tbody tr { height: var(--row-h, 32px); }
+    .smart-table td {
+      font-size: var(--row-fs, 12px); border-bottom: 1px solid rgba(30, 41, 59, 0.4);
+      color: #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      padding: 0 12px; transition: background-color 0.15s ease;
+    }
+    .smart-table tbody tr:hover td { background-color: rgba(255, 255, 255, 0.03); }
+
+    tr.coord-row { background-color: rgba(15, 23, 42, 0.8) !important; font-weight: 800; }
+    tr.coord-row td { color: var(--accent-yellow) !important; border-top: 1px solid var(--border-light); border-bottom: 1px solid var(--border-light); }
+    tr.total-row { background-color: #030712 !important; font-weight: 900; }
+    tr.total-row td { color: #FFF !important; border-top: 2px solid var(--accent-blue); }
+
+    .num-mono { font-family: 'JetBrains Mono', monospace; text-align: right; }
+    .th-right { text-align: right; }
+
+    .cockpit-view-wrapper { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; }
+    .cockpit-general-banner {
+      background: linear-gradient(90deg, rgba(30,41,59,0.7) 0%, rgba(15,23,42,0.9) 100%);
+      border-left: 4px solid var(--accent-yellow); border-radius: 10px; padding: 12px 20px;
+      display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; gap: 16px;
+      border-right: 1px solid var(--border); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+    }
+    .aging-strip {
+      background-color: rgba(15,23,42,0.5); border: 1px solid var(--border); border-radius: 8px;
+      padding: 6px 16px; display: flex; align-items: center; gap: 16px;
+    }
+    .aging-item { text-align: center; min-width: 45px; }
+    .aging-item .lbl { font-size: 9px; color: var(--text-muted); font-weight: 800; }
+    .aging-item .val { font-size: 15px; font-weight: 900; font-family: 'JetBrains Mono', monospace; margin-top: 2px;}
+
+    .macros-container-flex { display: flex; flex-direction: column; gap: 10px; flex-shrink: 0; }
+    .cockpit-macro-card { background: rgba(13,18,28,0.7); border: 1px solid var(--border); border-radius: 10px; padding: 10px 16px; }
+    .sub-cockpit-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .sub-box { background-color: rgba(15,23,42,0.4); border-radius: 8px; border: 1px solid var(--border); padding: 8px 12px; }
+    .sub-box-title { font-size: 11px; font-weight: 800; text-transform: uppercase; margin-bottom: 6px; text-align: center; }
+    .sub-box-metrics { display: flex; justify-content: space-around; text-align: center; }
+    .sub-metric-num { font-size: 20px; font-weight: 900; font-family: 'JetBrains Mono', monospace; color: #FFF; margin-top: 2px;}
+    .sub-metric-lbl { font-size: 9px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; }
+
+    .chart-container-flex {
+      flex: 1; min-height: 140px; background: rgba(13,18,28,0.7); border: 1px solid var(--border);
+      border-radius: 10px; padding: 12px 16px; position: relative;
+    }
+
+    .progress-wrapper { display: flex; align-items: center; gap: 12px; width: 100%; }
+    .progress-bar-bg { flex: 1; height: 8px; background-color: rgba(15,23,42,0.8); border-radius: 4px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); }
+    .progress-bar-fill { height: 100%; background: linear-gradient(90deg, #f59e0b, #ef4444); border-radius: 4px; transition: width 1s cubic-bezier(0.4, 0, 0.2, 1); }
+
+    .badge-route {
+      display: inline-flex; align-items: center; padding: 4px 8px; border-radius: 6px;
+      background-color: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.2);
+      color: var(--accent-blue); text-decoration: none; font-size: 10.5px; font-weight: 700;
+      text-transform: uppercase; transition: all 0.2s ease;
+    }
+    .badge-route:hover { background-color: rgba(56, 189, 248, 0.2); color: #fff; }
+
+    .repair-performance-grid {
+      flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(680px, 1.45fr) minmax(360px, 0.8fr);
+      gap: 12px; overflow: hidden;
+    }
+    .repair-ranking-column { min-height: 0; display: grid; grid-template-rows: 1fr 1fr; gap: 12px; }
+    .repair-ranking-card {
+      min-height: 0; overflow: auto; background: rgba(13,18,28,0.7); border: 1px solid var(--border);
+      border-radius: 10px; padding: 12px;
+    }
+    .repair-ranking-title { font-size: 11px; font-weight: 900; text-transform: uppercase; margin-bottom: 8px; }
+    .repair-reason-row { display: grid; grid-template-columns: 1fr 52px 45px; gap: 8px; align-items: center; padding: 6px 0; border-bottom: 1px solid rgba(30,41,59,.55); }
+    .repair-reason-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10.5px; font-weight: 650; }
+    .meta-input { width: 76px; padding: 5px 7px; text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 800; }
+    .meta-actions { display:flex; align-items:center; gap:8px; }
+    .filter-scope-notice {
+      display: flex; align-items: center; gap: 9px; margin-bottom: 10px; padding: 9px 12px;
+      color: #fde68a; background: rgba(245,158,11,.09); border: 1px solid rgba(245,158,11,.24);
+      border-radius: 9px; font-size: 11px; font-weight: 650;
+    }
+
+    .footer-marquee {
+      position: fixed; left: 0; bottom: 0; width: 100vw; height: 40px;
+      background: rgba(9, 13, 20, 0.95); border-top: 1px solid var(--border);
+      z-index: 600; display: flex; align-items: center; overflow: hidden; backdrop-filter: blur(10px);
+    }
+    .marquee-text {
+      display: inline-block; padding-left: 100%; animation: marquee 45s linear infinite;
+      color: var(--accent-yellow); font-weight: 700; font-size: 13px;
+      white-space: nowrap; font-family: 'JetBrains Mono', monospace;
+    }
+    @keyframes marquee { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
+
+    body:not(.forced-desktop) {
+      @media (max-width: 768px) {
+        overflow-y: auto !important; overflow-x: hidden !important; height: auto !important;
+        #sidebar { position: fixed; left: 0; top: 0; bottom: 0; height: 100vh; z-index: 1000; }
+        #sidebar.hidden { margin-left: -320px; }
+        #content { height: auto !important; min-height: 100vh; overflow: visible !important; padding: 12px 12px 60px 12px; }
+        .screen-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+        .kpi-deck { grid-template-columns: repeat(2, 1fr) !important; }
+        .table-container-flex { overflow-x: auto !important; overflow-y: visible !important; display: block !important; height: auto !important; -webkit-overflow-scrolling: touch; }
+        .smart-table { table-layout: auto !important; min-width: 900px !important; width: max-content !important; height: auto !important; }
+        .smart-table tbody tr { height: 42px !important; }
+        .smart-table td { font-size: 12.5px !important; padding: 8px 10px !important; }
+        .cockpit-general-banner { flex-direction: column; align-items: flex-start; gap: 12px; }
+        .sub-cockpit-grid { grid-template-columns: 1fr !important; }
+        .chart-container-flex { min-height: 280px !important; }
+        .repair-performance-grid { display:flex; flex-direction:column; overflow:visible; }
+        .repair-ranking-column { display:flex; flex-direction:column; }
+        .repair-ranking-card { min-height:240px; }
+      }
+    }
+
+    body.forced-desktop { min-width: 1440px !important; overflow: hidden !important; height: 100vh !important; }
+    body.forced-desktop #content { height: calc(100vh - 40px) !important; overflow: hidden !important; padding: 16px 24px !important; }
+
+    .mobile-app-bar, .install-banner, .sidebar-scrim { display: none; }
+
+    @media (max-width: 768px) {
+      html { width: 100%; height: auto !important; min-height: 100%; overflow-x: hidden !important; overflow-y: auto !important; overscroll-behavior-y: contain; }
+      body:not(.forced-desktop) { display: block; width: 100%; height: auto !important; min-height: 100svh; overflow-x: hidden !important; overflow-y: visible !important; padding: 0; background: #07101a; touch-action: pan-y; }
+      body:not(.forced-desktop) #content { width: 100%; height: auto !important; min-height: 100svh; overflow: visible !important; padding: max(12px, env(safe-area-inset-top)) 12px calc(116px + env(safe-area-inset-bottom)) !important; }
+      body:not(.forced-desktop) #painel_principal { display: block !important; min-height: 0 !important; overflow: visible !important; }
+      body:not(.forced-desktop) .top-bar-controls { position: sticky; top: 0; z-index: 80; margin: -12px -12px 12px; padding: calc(10px + env(safe-area-inset-top)) 12px 10px; background: rgba(6,9,15,.9); backdrop-filter: blur(18px); border-bottom: 1px solid var(--border); }
+      body:not(.forced-desktop) .top-bar-controls::after { content: 'FSL Campo'; font-size: 14px; font-weight: 900; letter-spacing: .04em; position: absolute; left: 50%; transform: translateX(-50%); }
+      body:not(.forced-desktop) .top-bar-controls > button:last-child { display: none; }
+      body:not(.forced-desktop) #btn_open_sidebar { display: inline-flex !important; min-height: 42px; align-items: center; }
+      body:not(.forced-desktop) #sidebar { width: min(88vw, 360px); min-width: 0; padding: max(18px, env(safe-area-inset-top)) 18px calc(24px + env(safe-area-inset-bottom)); transform: translateX(0); margin-left: 0; transition: transform .25s ease; box-shadow: 18px 0 50px rgba(0,0,0,.55); }
+      body:not(.forced-desktop) #sidebar.hidden { margin-left: 0; transform: translateX(-105%); }
+      body:not(.forced-desktop) .sidebar-scrim { display: block; position: fixed; inset: 0; z-index: 900; background: rgba(0,0,0,.58); backdrop-filter: blur(2px); }
+      body:not(.forced-desktop) .sidebar-scrim.hidden { display: none; }
+      body:not(.forced-desktop) .screen-title { font-size: 14px; line-height: 1.35; }
+      body:not(.forced-desktop) .kpi-deck { gap: 8px; }
+      body:not(.forced-desktop) .kpi-card { min-height: 94px; padding: 12px; border-radius: 14px; }
+      body:not(.forced-desktop) .kpi-val { font-size: 27px; }
+      body:not(.forced-desktop) .table-container-flex { display: block !important; width: 100%; height: auto !important; max-height: none !important; min-height: 0; background: transparent; border: 0; overflow: visible !important; }
+      body:not(.forced-desktop) .cockpit-view-wrapper { display: block; height: auto !important; max-height: none !important; overflow: visible !important; }
+      body:not(.forced-desktop) .repair-performance-grid,
+      body:not(.forced-desktop) .repair-ranking-column { display: flex; flex-direction: column; height: auto !important; overflow: visible !important; }
+      body:not(.forced-desktop) .repair-ranking-card { flex: none; height: auto !important; max-height: none !important; overflow: visible !important; }
+      body:not(.forced-desktop) .smart-table.mobile-cards { min-width: 0 !important; width: 100% !important; display: block; }
+      body:not(.forced-desktop) .smart-table.mobile-cards thead { display: none; }
+      body:not(.forced-desktop) .smart-table.mobile-cards tbody { display: grid; gap: 10px; }
+      body:not(.forced-desktop) .smart-table.mobile-cards tr { display: grid; grid-template-columns: 1fr 1fr; height: auto !important; padding: 12px; background: rgba(13,18,28,.92); border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 8px 24px rgba(0,0,0,.18); }
+      body:not(.forced-desktop) .smart-table.mobile-cards td { display: flex; flex-direction: column; gap: 4px; white-space: normal; overflow: visible; padding: 8px !important; min-width: 0; text-align: left !important; border: 0; }
+      body:not(.forced-desktop) .smart-table.mobile-cards td::before { content: attr(data-label); color: var(--text-muted); font: 800 9px/1.2 'Inter',sans-serif; text-transform: uppercase; letter-spacing: .04em; }
+      body:not(.forced-desktop) .smart-table.mobile-cards td:first-child { grid-column: 1 / -1; font-size: 14px !important; border-bottom: 1px solid var(--border); padding-bottom: 10px !important; }
+      body:not(.forced-desktop) .cockpit-general-banner > * { width: 100%; }
+      body:not(.forced-desktop) .aging-strip { width: 100%; gap: 6px !important; padding: 8px !important; overflow-x: auto; }
+      body:not(.forced-desktop) .aging-item { min-width: 58px; }
+      body:not(.forced-desktop) .sub-box-metrics { gap: 8px; }
+      body:not(.forced-desktop) .footer-marquee { bottom: calc(67px + env(safe-area-inset-bottom)); height: 30px; }
+      body:not(.forced-desktop) .marquee-text { font-size: 10px; }
+      .mobile-app-bar { position: fixed; display: grid; grid-template-columns: repeat(5,1fr); left: 8px; right: 8px; bottom: calc(8px + env(safe-area-inset-bottom)); height: 58px; z-index: 800; padding: 5px; background: rgba(13,18,28,.94); border: 1px solid var(--border-light); border-radius: 18px; box-shadow: 0 12px 40px rgba(0,0,0,.55); backdrop-filter: blur(18px); }
+      .mobile-nav-btn { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; border:0; border-radius:13px; background:transparent; color:var(--text-muted); font:700 9px 'Inter',sans-serif; }
+      .mobile-nav-btn i { font-size:17px; }
+      .mobile-nav-btn.active { color:#fff; background:rgba(13,148,136,.24); }
+      .install-banner { position: fixed; display:flex; align-items:center; gap:10px; left:12px; right:12px; bottom: calc(78px + env(safe-area-inset-bottom)); z-index:850; padding:12px; border-radius:14px; color:#fff; background:#0f766e; box-shadow:0 14px 40px rgba(0,0,0,.5); }
+      .install-banner.hidden { display:none; }
+      .install-banner .install-copy { flex:1; font-size:11px; line-height:1.35; }
+      .install-banner button { border:0; border-radius:9px; padding:9px 11px; font-weight:800; background:#fff; color:#0f766e; }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="sidebar">
+    <div class="brand-box">
+      <h2><i class="fa-solid fa-satellite-dish text-teal-400"></i> NOC - Operação</h2>
+      <button class="btn-toggle-panel" onclick="toggleSidebar()" title="Ocultar Painel"><i class="fa-solid fa-chevron-left"></i></button>
+    </div>
+
+    <div id="status_msg" class="status-badge">Aguardando Conexão...</div>
+
+    <button id="btn_iniciar" class="btn-action btn-primary" onclick="iniciarDriver()">
+      <i class="fa-solid fa-play"></i> Iniciar Driver
+    </button>
+    <button id="btn_hierarquia" class="btn-action btn-secondary" onclick="carregarHierarquia()">
+      <i class="fa-solid fa-sitemap"></i> Atualizar Base
+    </button>
+
+    <button class="btn-action btn-secondary" onclick="alternarModoDesktop()">
+      <i class="fa-solid fa-display"></i> <span class="lbl_desktop_mode">Modo Computador</span>
+    </button>
+
+    <div style="border-top: 1px solid rgba(255,255,255,0.05); margin: 6px 0;"></div>
+
+    <div class="control-group">
+      <label>Regional Ativa</label>
+      <div class="regional-toggle">
+        <button id="btn_reg_norte" class="reg-btn norte" onclick="mudarRegional('NORTE')">Norte</button>
+        <button id="btn_reg_sul" class="reg-btn sul" onclick="mudarRegional('SUL')">Sul</button>
+      </div>
+    </div>
+
+    <div class="control-group">
+      <label>Modo de Exibição</label>
+      <select id="modo_exibicao" onchange="alterarModoManual()">
+        <option value="ROTACAO">🔄 Rotação Automática (NOC)</option>
+        <option value="PRODUCAO">📊 Produção FTTH</option>
+        <option value="REPAROS">🛠️ Cockpit Reparos</option>
+        <option value="PERFORMANCE_REPAROS">🎯 Performance de Reparos</option>
+        <option value="REPAROS_SETOR">🗺️ Reparos por Setor</option>
+        <option value="PENDENCIAS">❌ Pendências (Gargalos)</option>
+        <option value="EXECUCAO">⏱️ Execução > 80 Min</option>
+        <option value="ZERADOS">💤 Ofensores (Zerados)</option>
+      </select>
+    </div>
+
+    <div class="control-group">
+      <label>Filtro: Coordenação</label>
+      <select id="f_gerente" onchange="carregarTelaAtualManual()"><option value="">Todas as Coordenações</option></select>
+    </div>
+
+    <div class="control-group">
+      <label>Filtro: Supervisão</label>
+      <select id="f_sup" onchange="carregarTelaAtualManual()"><option value="">Todas as Supervisões</option></select>
+    </div>
+
+    <div class="control-group">
+      <label>Filtro: Território (Setor)</label>
+      <select id="f_setor" onchange="carregarTelaAtualManual()"><option value="">Todos os Setores</option></select>
+    </div>
+
+    <div class="control-group">
+      <label>Visão: Macro Atividade</label>
+      <select id="f_macro" onchange="carregarTelaAtualManual()"><option value="">Visão Geral (Todas)</option></select>
+    </div>
+
+    <div class="control-group">
+      <label>Visão: Operadora (Tenant)</label>
+      <select id="f_tenant" onchange="carregarTelaAtualManual()"><option value="">Todas as Operadoras</option></select>
+    </div>
+
+    <div class="control-group" style="margin-top: 8px;">
+      <label>Rotação (Segundos/Tela)</label>
+      <input type="number" id="tempo_tela" value="30" min="5" max="300" style="text-align: center; font-weight: bold; color: var(--accent-blue);" onchange="reiniciarRotacao()">
+    </div>
+  </div>
+
+  <div id="content">
+    <div class="top-bar-controls">
+      <div class="top-bar-left">
+        <button id="btn_open_sidebar" class="btn-toggle-panel" onclick="toggleSidebar()" style="display:none;" title="Expandir Controles">
+          <i class="fa-solid fa-bars mr-1"></i> Filtros e Controles
+        </button>
+      </div>
+
+      <button class="btn-toggle-panel" onclick="alternarModoDesktop()" title="Alternar Modo de Exibição">
+        <i class="fa-solid fa-display"></i> <span class="lbl_desktop_mode">Modo Computador</span>
+      </button>
+    </div>
+
+    <div id="painel_principal" style="flex:1; min-height:0; display:flex; flex-direction:column;">
+      <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; color:var(--text-muted); gap: 16px;">
+        <i class="fa-solid fa-circle-notch fa-spin fa-3x" style="color: var(--accent-blue);"></i>
+        <h3 style="font-weight: 500; font-size: 16px;">Inicializando Telemetria do Salesforce...</h3>
+      </div>
+    </div>
+  </div>
+
+  <div id="sidebar_scrim" class="sidebar-scrim hidden" onclick="fecharSidebarMobile()" aria-hidden="true"></div>
+
+  <div id="install_banner" class="install-banner hidden" role="status">
+    <i class="fa-solid fa-mobile-screen-button fa-xl"></i>
+    <div class="install-copy"><strong>Instale o FSL Campo</strong><br>Acesso rápido e visual em tela cheia.</div>
+    <button type="button" onclick="instalarPwa()">Instalar</button>
+    <button type="button" onclick="ocultarInstalacao()" aria-label="Agora não" style="background:transparent;color:#fff;padding:8px">×</button>
+  </div>
+
+  <nav class="mobile-app-bar" aria-label="Navegação principal">
+    <button class="mobile-nav-btn active" data-tela="PRODUCAO" onclick="navegarMobile('PRODUCAO', this)"><i class="fa-solid fa-chart-column"></i><span>Produção</span></button>
+    <button class="mobile-nav-btn" data-tela="REPAROS" onclick="navegarMobile('REPAROS', this)"><i class="fa-solid fa-screwdriver-wrench"></i><span>Reparos</span></button>
+    <button class="mobile-nav-btn" data-tela="EXECUCAO" onclick="navegarMobile('EXECUCAO', this)"><i class="fa-solid fa-clock"></i><span>Em campo</span></button>
+    <button class="mobile-nav-btn" data-tela="ZERADOS" onclick="navegarMobile('ZERADOS', this)"><i class="fa-solid fa-user-slash"></i><span>Zerados</span></button>
+    <button class="mobile-nav-btn" onclick="abrirFiltrosMobile()"><i class="fa-solid fa-sliders"></i><span>Filtros</span></button>
+  </nav>
+
+  <div class="footer-marquee">
+    <div id="marquee_texto" class="marquee-text"><i class="fa-solid fa-bolt text-yellow-400 mr-2"></i> Inicializando sistema...</div>
+  </div>
+
+  <audio id="player_audio" style="display:none;"></audio>
+
+  <script>
+    let modoRotacao = true;
+    let chartInstance = null;
+    let timerRotacao = null;
+    let fetchController = null;
+    let promptInstalacao = null;
+
+    const playlistNoc = [
+      { regiao: 'NORTE', tela: 'PRODUCAO' },
+      { regiao: 'NORTE', tela: 'REPAROS' },
+      { regiao: 'SUL',   tela: 'PRODUCAO' },
+      { regiao: 'SUL',   tela: 'REPAROS' }
+    ];
+    let indicePlaylist = 0;
+
+    function alternarModoDesktop() {
+      const vp = document.getElementById('meta_viewport');
+      const isDesktop = localStorage.getItem('force_desktop') === 'true';
+      const rotulos = document.querySelectorAll('.lbl_desktop_mode');
+
+      if (!isDesktop) {
+        vp.setAttribute('content', 'width=1440, initial-scale=0.35, user-scalable=yes, maximum-scale=3.0');
+        rotulos.forEach(el => el.innerText = "Modo Celular");
+        localStorage.setItem('force_desktop', 'true');
+        document.body.classList.add('forced-desktop');
+      } else {
+        vp.setAttribute('content', 'width=device-width, initial-scale=1.0');
+        rotulos.forEach(el => el.innerText = "Modo Computador");
+        localStorage.setItem('force_desktop', 'false');
+        document.body.classList.remove('forced-desktop');
+      }
+      setTimeout(ajustarDimensoesTabela, 250);
+    }
+
+    function aplicarPreferenciaVisual() {
+      if (localStorage.getItem('force_desktop') === 'true') {
+        const vp = document.getElementById('meta_viewport');
+        vp.setAttribute('content', 'width=1440, initial-scale=0.35, user-scalable=yes, maximum-scale=3.0');
+        document.querySelectorAll('.lbl_desktop_mode').forEach(el => el.innerText = "Modo Celular");
+        document.body.classList.add('forced-desktop');
+      }
+    }
+
+    function toggleSidebar() {
+      const sb = document.getElementById('sidebar');
+      const btn = document.getElementById('btn_open_sidebar');
+      sb.classList.toggle('hidden');
+      btn.style.display = sb.classList.contains('hidden') ? 'inline-block' : 'none';
+      if (window.innerWidth <= 768) document.getElementById('sidebar_scrim').classList.toggle('hidden', sb.classList.contains('hidden'));
+      setTimeout(ajustarDimensoesTabela, 320); 
+    }
+
+    function abrirFiltrosMobile() {
+      const sb = document.getElementById('sidebar');
+      sb.classList.remove('hidden');
+      document.getElementById('sidebar_scrim').classList.remove('hidden');
+    }
+
+    function fecharSidebarMobile() {
+      if (window.innerWidth > 768) return;
+      document.getElementById('sidebar').classList.add('hidden');
+      document.getElementById('sidebar_scrim').classList.add('hidden');
+      document.getElementById('btn_open_sidebar').style.display = 'inline-block';
+    }
+
+    function navegarMobile(tela, botao) {
+      modoRotacao = false;
+      pararRotacao();
+      document.getElementById('modo_exibicao').value = tela;
+      document.querySelectorAll('.mobile-nav-btn[data-tela]').forEach(el => el.classList.remove('active'));
+      botao.classList.add('active');
+      carregarTelaAtualManual();
+    }
+
+    function prepararTabelasMobile() {
+      document.querySelectorAll('.smart-table').forEach(tabela => {
+        tabela.classList.add('mobile-cards');
+        const cabecalhos = [...tabela.querySelectorAll('thead th')].map(th => th.textContent.trim());
+        tabela.querySelectorAll('tbody tr').forEach(linha => {
+          [...linha.children].forEach((celula, indice) => celula.dataset.label = cabecalhos[indice] || 'Detalhe');
+        });
+      });
+    }
+
+    function ocultarInstalacao() {
+      document.getElementById('install_banner').classList.add('hidden');
+      sessionStorage.setItem('pwa_banner_closed', 'true');
+    }
+
+    async function instalarPwa() {
+      if (!promptInstalacao) return;
+      promptInstalacao.prompt();
+      await promptInstalacao.userChoice;
+      promptInstalacao = null;
+      ocultarInstalacao();
+    }
+
+    window.addEventListener('beforeinstallprompt', evento => {
+      evento.preventDefault();
+      promptInstalacao = evento;
+      if (!sessionStorage.getItem('pwa_banner_closed')) document.getElementById('install_banner').classList.remove('hidden');
+    });
+
+    window.addEventListener('appinstalled', ocultarInstalacao);
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === '[' || e.key === ']') toggleSidebar();
+    });
+
+    async function iniciarDriver() {
+      document.getElementById('status_msg').innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Iniciando Selenium...';
+      const res = await fetch('/api/iniciar_driver', { method: 'POST' });
+      const data = await res.json();
+      document.getElementById('status_msg').innerHTML = data.sucesso ? '<i class="fa-solid fa-check text-green-400"></i> ' + data.msg : data.msg;
+      if (data.sucesso) atualizarFiltros();
+    }
+
+    async function carregarHierarquia() {
+      document.getElementById('status_msg').innerHTML = '<i class="fa-solid fa-cloud-arrow-down fa-bounce"></i> Baixando Base...';
+      const res = await fetch('/api/carregar_hierarquia', { method: 'POST' });
+      const data = await res.json();
+      if (data.sucesso) {
+        document.getElementById('status_msg').innerHTML = `<i class="fa-solid fa-check text-green-400"></i> Hierarquia: ${data.total} Téc.`;
+        atualizarFiltros();
+      } else {
+        document.getElementById('status_msg').innerText = data.msg;
+      }
+    }
+
+    async function atualizarFiltros() {
+      const res = await fetch('/api/filtros');
+      const data = await res.json();
+      popularSelect('f_gerente', data.gerentes, 'Todas as Coordenações');
+      popularSelect('f_sup', data.supervisores, 'Todas as Supervisões');
+      popularSelect('f_setor', data.setores, 'Todos os Setores');
+      popularSelect('f_macro', data.macros, 'Visão Geral (Todas)');
+      popularSelect('f_tenant', data.tenants, 'Todas as Operadoras');
+    }
+
+    function popularSelect(id, lista, textoPadrao) {
+      const sel = document.getElementById(id);
+      const valAtual = sel.value;
+      sel.innerHTML = `<option value="">${textoPadrao}</option>`;
+      lista.forEach(item => {
+        const opt = document.createElement('option');
+        opt.value = item;
+        opt.innerText = item;
+        if (item === valAtual) opt.selected = true;
+        sel.appendChild(opt);
+      });
+    }
+
+    function mudarRegional(reg) {
+      modoRotacao = false;
+      pararRotacao();
+      document.getElementById('modo_exibicao').value = 'PRODUCAO';
+      document.getElementById('btn_reg_norte').classList.remove('active');
+      document.getElementById('btn_reg_sul').classList.remove('active');
+      if(reg === 'NORTE') document.getElementById('btn_reg_norte').classList.add('active');
+      if(reg === 'SUL') document.getElementById('btn_reg_sul').classList.add('active');
+      carregarTelaAtualManual();
+    }
+
+    function alterarModoManual() {
+      const val = document.getElementById('modo_exibicao').value;
+      if (val === 'ROTACAO') {
+        modoRotacao = true;
+        document.getElementById('btn_reg_norte').classList.remove('active');
+        document.getElementById('btn_reg_sul').classList.remove('active');
+        reiniciarRotacao();
+      } else {
+        modoRotacao = false;
+        pararRotacao();
+        carregarTelaAtualManual();
+      }
+    }
+
+    function obterFiltros() {
+      return {
+        gerente: document.getElementById('f_gerente').value ? [document.getElementById('f_gerente').value] : [],
+        supervisor: document.getElementById('f_sup').value ? [document.getElementById('f_sup').value] : [],
+        setor: document.getElementById('f_setor').value ? [document.getElementById('f_setor').value] : [],
+        macro: document.getElementById('f_macro').value ? [document.getElementById('f_macro').value] : [],
+        tenant: document.getElementById('f_tenant').value ? [document.getElementById('f_tenant').value] : []
+      };
+    }
+
+    async function carregarTelaAtualManual() {
+      const filtros = obterFiltros();
+      let regionalEscolhida = document.getElementById('btn_reg_sul').classList.contains('active') ? 'SUL' : 'NORTE';
+      let telaEscolhida = document.getElementById('modo_exibicao').value;
+
+      if (telaEscolhida === 'ROTACAO') return;
+      await executarRequisicaoDados(telaEscolhida, regionalEscolhida, filtros);
+    }
+
+    function agendarProximaRotacao() {
+      pararRotacao();
+      if (!modoRotacao) return;
+      const seg = parseInt(document.getElementById('tempo_tela').value) || 30;
+      timerRotacao = setTimeout(async () => {
+        await carregarTelaAutomatica();
+      }, seg * 1000);
+    }
+
+    function pararRotacao() {
+      if (timerRotacao) {
+        clearTimeout(timerRotacao);
+        timerRotacao = null;
+      }
+    }
+
+    function reiniciarRotacao() {
+      pararRotacao();
+      if (modoRotacao) carregarTelaAutomatica();
+    }
+
+    async function carregarTelaAutomatica() {
+      if (!modoRotacao) return;
+      const filtros = obterFiltros();
+      const itemAtual = playlistNoc[indicePlaylist];
+
+      const btnN = document.getElementById('btn_reg_norte');
+      const btnS = document.getElementById('btn_reg_sul');
+      btnN.classList.remove('active');
+      btnS.classList.remove('active');
+      if (itemAtual.regiao === 'NORTE') btnN.classList.add('active');
+      if (itemAtual.regiao === 'SUL') btnS.classList.add('active');
+
+      await executarRequisicaoDados(itemAtual.tela, itemAtual.regiao, filtros);
+      indicePlaylist = (indicePlaylist + 1) % playlistNoc.length;
+      agendarProximaRotacao();
+    }
+
+    async function executarRequisicaoDados(tela, regiao, filtros) {
+      if (fetchController) fetchController.abort();
+      fetchController = new AbortController();
+      const timeoutId = setTimeout(() => fetchController.abort(), 15000);
+
+      try {
+        const res = await fetch('/api/dados', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tela, regiao, filtros }),
+          signal: fetchController.signal 
+        });
+        
+        clearTimeout(timeoutId);
+        const data = await res.json();
+
+        const badge = document.getElementById('status_msg');
+        if (data.status_msg && !badge.innerHTML.includes(data.status_msg)) {
+          badge.innerHTML = `<i class="fa-solid fa-server"></i> ${data.status_msg}`;
+        }
+        
+        if (data.audio_pendente) {
+          const audio = document.getElementById('player_audio');
+          audio.src = `/audio/${data.audio_pendente}`;
+          audio.play().catch(() => {});
+        }
+
+        renderizarConteudo(tela, regiao, data.payload, data.ultima_atualizacao);
+      } catch(e) {
+        if (e.name !== 'AbortError') {
+          console.error("Erro na requisição dos dados:", e);
+        }
+      }
+    }
+
+    function corPorMetrica(val, q33, q66) {
+      if (val >= q66) return 'color: var(--accent-green);';
+      if (val >= q33) return 'color: var(--accent-yellow);';
+      return 'color: var(--accent-red);';
+    }
+
+    function escaparHtml(valor) {
+      const div = document.createElement('div');
+      div.textContent = String(valor ?? '');
+      return div.innerHTML;
+    }
+
+    async function salvarMetasReparos(regiao) {
+      const botao = document.getElementById('btn_salvar_metas');
+      const mensagem = document.getElementById('msg_metas');
+      const metas = {};
+      document.querySelectorAll('.meta-input[data-coordenador]').forEach(input => {
+        metas[input.dataset.coordenador] = Math.max(0, parseInt(input.value, 10) || 0);
+      });
+
+      botao.disabled = true;
+      botao.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvando';
+      try {
+        const resposta = await fetch('/api/metas_reparos', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ regiao, metas })
+        });
+        const data = await resposta.json();
+        if (!resposta.ok || !data.sucesso) throw new Error(data.msg || 'Falha ao salvar metas.');
+        mensagem.textContent = data.msg;
+        mensagem.style.color = 'var(--accent-green)';
+        await carregarTelaAtualManual();
+      } catch (erro) {
+        mensagem.textContent = erro.message;
+        mensagem.style.color = 'var(--accent-red)';
+      } finally {
+        if (document.body.contains(botao)) {
+          botao.disabled = false;
+          botao.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Salvar metas';
+        }
+      }
+    }
+
+    function ajustarDimensoesTabela() {
+      const isForcedDesktop = document.body.classList.contains('forced-desktop');
+      const isMobileNative = window.innerWidth <= 768 && !isForcedDesktop;
+      const telaAtual = document.getElementById('modo_exibicao')?.value;
+
+      const container = document.querySelector('.table-container-flex');
+      if (!container) return;
+
+      // Em telas com listas longas (Zerados, Pendências, Execução), mantém altura fixa de linha e libera scroll natural
+      if (isMobileNative || telaAtual !== 'PRODUCAO') {
+        container.style.removeProperty('--row-h');
+        container.style.removeProperty('--row-fs');
+        return;
+      }
+      
+      const tbody = container.querySelector('tbody');
+      if (!tbody) return;
+
+      const rowCount = tbody.children.length;
+      if (rowCount === 0) return;
+
+      const containerHeight = container.clientHeight;
+      const thead = container.querySelector('thead');
+      const theadHeight = thead ? thead.offsetHeight : 34;
+      
+      const espacoDisponivel = containerHeight - theadHeight - 4;
+      const rowHeightIdeal = Math.floor(espacoDisponivel / rowCount);
+      const rowHeight = Math.max(24, Math.min(rowHeightIdeal, 52));
+      const fontSize = Math.max(11, Math.min(rowHeight * 0.42, 16));
+
+      container.style.setProperty('--row-h', `${rowHeight}px`);
+      container.style.setProperty('--row-fs', `${fontSize}px`);
+    }
+
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(ajustarDimensoesTabela, 150);
+    });
+
+    function renderizarConteudo(telaType, regiaoTag, p, atz) {
+      if (chartInstance) {
+        chartInstance.destroy();
+        chartInstance = null;
+      }
+
+      const root = document.getElementById('painel_principal');
+      
+      if (!p || Object.keys(p).length === 0) {
+        if (telaType === 'REPAROS') {
+          p = {
+            geral: { hoje: 0, amanha: 0, futuro: 0, tot_d0: 0, pct_d0: 0, tot_d1: 0, pct_d1: 0 },
+            aging_geral: {},
+            aging_nio: {},
+            inst: { nio: { hoje: 0, pct: 0 }, tim: { hoje: 0, pct: 0 }, demais: { hoje: 0, pct: 0 } },
+            rep: { nio: { hoje: 0, pct: 0 }, tim: { hoje: 0, pct: 0 }, demais: { hoje: 0, pct: 0 } },
+            macros: {},
+            vol_hora: []
+          };
+        } else {
+          root.innerHTML = `
+            <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; color:var(--text-muted); gap: 16px;">
+              <i class="fa-solid fa-satellite-dish fa-fade fa-3x" style="color: var(--accent-blue);"></i>
+              <h3 style="font-weight: 500; font-size: 16px;">Sincronizando ${telaType} para ${regiaoTag}...</h3>
+            </div>`;
+          return;
+        }
+      }
+
+      if (telaType === 'PRODUCAO') {
+        let rows = (p.tabela || []).map(r => {
+          let isCoord = r.TIPO === 'COORD';
+          let isTotal = r.TIPO === 'TOTAL';
+          let rowClass = isCoord ? 'coord-row' : (isTotal ? 'total-row' : 'sup-row');
+
+          const cAtv = corPorMetrica(r.ATIVIDADE_POR_TECNICO, 1.8, 2.8);
+          const cEfi = corPorMetrica(r.EFICACIA, 60, 75);
+          const cSla = corPorMetrica(r.SLA_PCT, 65, 80);
+
+          let nomeEquipe = '';
+          if (isCoord) {
+            nomeEquipe = `<div style="display:flex; align-items:center; gap:8px;"><i class="fa-solid fa-users text-teal-500" style="font-size:12px;"></i> <span style="color:var(--accent-yellow); font-weight:800; text-transform:uppercase;">${r.COORDENADOR}</span></div>`;
+          } else if (isTotal) {
+            nomeEquipe = `<div style="color:#FFF; font-weight:900;">TOTAL GERAL</div>`;
+          } else {
+            nomeEquipe = `<div style="padding-left:14px; color:var(--text-main); font-weight:600; display:flex; align-items:center; gap:6px;"><i class="fa-solid fa-arrow-turn-up fa-rotate-90 text-slate-500" style="font-size:10px;"></i> ${r.SUPERVISOR}</div>`;
+          }
+
+          return `
+            <tr class="${rowClass}">
+              <td>${nomeEquipe}</td>
+              <td class="num-mono" style="${r.ZERADOS > 0 ? 'color: var(--accent-red); font-weight: 900; background:rgba(239, 68, 68, 0.1); border-radius:4px;' : 'color:var(--text-muted);'}">${r.ZERADOS}</td>
+              <td class="num-mono" style="color: var(--accent-green); font-weight: 800;">${r.COM_SUCESSO}</td>
+              <td class="num-mono" style="color: var(--text-muted);">${r.SEM_SUCESSO}</td>
+              <td class="num-mono" style="color: var(--accent-blue);">${r.EM_EXEC}</td>
+              <td class="num-mono">${r.EM_DESL}</td>
+              <td class="num-mono" style="font-weight: 700; color: var(--accent-purple);">${r.CAIXA_GERAL}</td>
+              <td class="num-mono" style="color:#FFF; background:rgba(255,255,255,0.05); font-weight:900;">${r.PROJECAO}</td>
+              <td class="num-mono" style="${cAtv} font-weight: 900;">${r.ATIVIDADE_POR_TECNICO.toFixed(2)}</td>
+              <td class="num-mono" style="${cSla}">${r.SLA_PCT.toFixed(1)}%</td>
+              <td class="num-mono" style="${cEfi}">${r.EFICACIA.toFixed(1)}%</td>
+              <td class="num-mono" style="color: var(--text-muted); font-weight: 700;">${r.MO_ATIVA}</td>
+            </tr>`;
+        }).join('');
+
+        root.innerHTML = `
+          <div class="screen-header">
+            <div class="screen-title" style="color: #FFF;">
+              <i class="fa-solid fa-chart-line" style="color: var(--accent-blue);"></i> Produção Executiva FTTH - ${regiaoTag}
+            </div>
+            <div style="font-size: 13px; font-weight: 700; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; display:flex; gap: 16px;">
+              <span>🎯 META: <span style="color:#FFF;">${p.meta}</span></span>
+              <span>🏆 REALIZADO: <span style="color:var(--accent-green);">${p.realizado}</span></span>
+              <span style="border-left:1px solid var(--border-light); padding-left:16px;">🕒 BD: ${atz}</span>
+            </div>
+          </div>
+
+          <div class="kpi-deck">
+            <div class="kpi-card b-blue"><span class="kpi-label">Volume NIO</span><span class="kpi-sub">${p.kpis.NIO}</span></div>
+            <div class="kpi-card b-red"><span class="kpi-label">Volume TIM</span><span class="kpi-sub">${p.kpis.TIM}</span></div>
+            <div class="kpi-card b-purple"><span class="kpi-label">Volume DEMAIS</span><span class="kpi-sub">${p.kpis.DEMAIS}</span></div>
+            <div class="kpi-card b-yellow"><span class="kpi-label">TOTAL CONSOLIDADO</span><span class="kpi-sub">${p.kpis.TOTAL}</span></div>
+          </div>
+
+          <div class="table-container-flex">
+            <table class="smart-table">
+              <thead>
+                <tr>
+                  <th style="width: 40%;">Coordenação / Equipe de Supervisão</th>
+                  <th class="th-right" style="width: 5%;">Zer.</th>
+                  <th class="th-right" style="width: 5%;">Suc.</th>
+                  <th class="th-right" style="width: 5%;">S/Suc.</th>
+                  <th class="th-right" style="width: 5%;">Exec</th>
+                  <th class="th-right" style="width: 5%;">Desl</th>
+                  <th class="th-right" style="width: 5%;">Caixa</th>
+                  <th class="th-right" style="width: 6%;">Proj.</th>
+                  <th class="th-right" style="width: 6%;">Atv/Téc</th>
+                  <th class="th-right" style="width: 6%;">% AG</th>
+                  <th class="th-right" style="width: 6%;">Efic.</th>
+                  <th class="th-right" style="width: 6%;">M.O</th>
+                </tr>
+              </thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>
+        `;
+
+        const top10Str = (p.top10 || []).map((t, idx) => `${idx === 0 ? '🥇' : (idx === 1 ? '🥈' : '🥉')} ${t.Nome} [${t.SUC}]`).join(' ✦ ');
+        document.getElementById('marquee_texto').innerHTML = `<i class="fa-solid fa-earth-americas text-blue-400 mr-2"></i> FTTH PRODUÇÃO - ${regiaoTag}&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;<span style="color:#FFF;">TOP 10 DESTAQUES:</span> ${top10Str}&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;👥 EFETIVO: ${p.mo_total}`;
+        requestAnimationFrame(ajustarDimensoesTabela);
+      }
+
+      else if (telaType === 'PERFORMANCE_REPAROS') {
+        const linhas = p.tabela || [];
+        const total = linhas.find(r => r.TIPO === 'TOTAL') || {};
+        const corMeta = valor => valor >= 100 ? 'var(--accent-green)' : (valor >= 80 ? 'var(--accent-yellow)' : 'var(--accent-red)');
+        const corGap = valor => valor >= 0 ? 'var(--accent-green)' : 'var(--accent-red)';
+
+        const rows = linhas.map(r => {
+          const totalRow = r.TIPO === 'TOTAL';
+          const metaCell = totalRow
+            ? `<span style="font-weight:900;">${r.META}</span>`
+            : `<input class="meta-input" type="number" min="0" max="100000" step="1" value="${r.META}" data-coordenador="${escaparHtml(r.COORDENADOR)}" aria-label="Meta de ${escaparHtml(r.COORDENADOR)}">`;
+          return `
+            <tr class="${totalRow ? 'total-row' : ''}">
+              <td style="font-weight:${totalRow ? '900' : '700'}; color:${totalRow ? '#FFF' : 'var(--text-main)'};">${escaparHtml(r.COORDENADOR)}</td>
+              <td class="num-mono" style="color:var(--accent-green); font-weight:800;">${r.SUCESSO}</td>
+              <td class="num-mono" style="color:var(--accent-red);">${r.SEM_SUCESSO}</td>
+              <td class="num-mono" style="color:var(--accent-purple);">${r.CAIXA}</td>
+              <td class="num-mono" style="color:${r.ZERADOS ? 'var(--accent-red)' : 'var(--text-muted)'};">${r.ZERADOS}</td>
+              <td class="num-mono" style="color:${corMeta(r.EFICACIA)}; font-weight:900;">${r.EFICACIA.toFixed(1)}%</td>
+              <td class="num-mono" style="color:#FFF; font-weight:900; background:rgba(255,255,255,.04);">${r.PROJETADO}</td>
+              <td class="num-mono" style="color:${corGap(r.DIF_META)}; font-weight:800;">${r.DIF_META > 0 ? '+' : ''}${r.DIF_META}</td>
+              <td class="num-mono">${metaCell}</td>
+              <td class="num-mono" style="color:${corGap(r.GAP_META)}; font-weight:800;">${r.GAP_META > 0 ? '+' : ''}${r.GAP_META}</td>
+              <td class="num-mono" style="color:${corMeta(r.PCT_META)}; font-weight:900;">${r.PCT_META.toFixed(1)}%</td>
+            </tr>`;
+        }).join('');
+
+        function rankingHtml(lista, tipo) {
+          if (!lista || !lista.length) return '<div style="padding:28px 8px; text-align:center; color:var(--text-muted); font-size:12px;">Sem motivos disponíveis na base atual.</div>';
+          const cor = tipo === 'sucesso' ? 'var(--accent-green)' : 'var(--accent-red)';
+          return lista.map((item, indice) => `
+            <div class="repair-reason-row" title="${escaparHtml(item.MOTIVO)}">
+              <div class="repair-reason-name"><span style="color:${cor}; margin-right:5px;">${indice + 1}.</span>${escaparHtml(item.MOTIVO)}</div>
+              <div class="num-mono" style="font-weight:900; color:#FFF;">${item.QUANTIDADE}</div>
+              <div class="num-mono" style="font-size:10px; color:${cor}; font-weight:800;">${item.PCT.toFixed(1)}%</div>
+            </div>`).join('');
+        }
+
+        root.innerHTML = `
+          <div class="screen-header">
+            <div class="screen-title" style="color:var(--accent-blue);"><i class="fa-solid fa-bullseye"></i> Performance de Reparos - ${regiaoTag}</div>
+            <div class="meta-actions">
+              <span id="msg_metas" style="font-size:11px; color:var(--text-muted);">Metas editáveis por coordenação</span>
+              <button id="btn_salvar_metas" class="btn-action btn-primary" onclick="salvarMetasReparos('${regiaoTag}')"><i class="fa-solid fa-floppy-disk"></i> Salvar metas</button>
+              <span style="font-size:11px; color:var(--text-muted); font-family:'JetBrains Mono';">BD: ${atz}</span>
+            </div>
+          </div>
+          <div class="kpi-deck">
+            <div class="kpi-card b-green"><span class="kpi-label">Reparos com sucesso</span><span class="kpi-val">${total.SUCESSO || 0}</span></div>
+            <div class="kpi-card b-red"><span class="kpi-label">Sem sucesso</span><span class="kpi-val">${total.SEM_SUCESSO || 0}</span></div>
+            <div class="kpi-card b-purple"><span class="kpi-label">Projeção de encerramento</span><span class="kpi-val">${total.PROJETADO || 0}</span></div>
+            <div class="kpi-card b-yellow"><span class="kpi-label">Atingimento da meta</span><span class="kpi-val" style="color:${corMeta(total.PCT_META || 0)};">${(total.PCT_META || 0).toFixed(1)}%</span></div>
+          </div>
+          <div class="repair-performance-grid">
+            <div class="table-container-flex">
+              <table class="smart-table" style="min-width:950px;">
+                <thead><tr>
+                  <th style="width:24%;">Coordenação</th><th class="th-right">C/ Sucesso</th><th class="th-right">S/ Sucesso</th>
+                  <th class="th-right">Caixa</th><th class="th-right">Zerados</th><th class="th-right">Eficácia</th>
+                  <th class="th-right">Projetado</th><th class="th-right">Dif. Meta</th><th class="th-right">Meta</th>
+                  <th class="th-right">Gap Meta</th><th class="th-right">% Meta</th>
+                </tr></thead>
+                <tbody>${rows || '<tr><td colspan="11" style="padding:32px; text-align:center; color:var(--text-muted);">Sem dados de reparos para os filtros selecionados.</td></tr>'}</tbody>
+              </table>
+            </div>
+            <div class="repair-ranking-column">
+              <div class="repair-ranking-card">
+                <div class="repair-ranking-title" style="color:var(--accent-red);"><i class="fa-solid fa-triangle-exclamation"></i> Top 10 encerramentos sem sucesso</div>
+                ${rankingHtml(p.motivos_sem_sucesso, 'sem_sucesso')}
+              </div>
+              <div class="repair-ranking-card">
+                <div class="repair-ranking-title" style="color:var(--accent-green);"><i class="fa-solid fa-circle-check"></i> Top 10 encerramentos com sucesso</div>
+                ${rankingHtml(p.motivos_com_sucesso, 'sucesso')}
+              </div>
+            </div>
+          </div>`;
+
+        document.getElementById('marquee_texto').innerHTML = `<i class="fa-solid fa-bullseye text-blue-400 mr-2"></i> PERFORMANCE DE REPAROS - ${regiaoTag}&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;SUCESSO: ${total.SUCESSO || 0}&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;PROJETADO: ${total.PROJETADO || 0}&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;META: ${total.META || 0}`;
+      }
+
+      else if (telaType === 'REPAROS') {
+        const g = p.geral || { hoje: 0, amanha: 0, futuro: 0, tot_d0: 0, pct_d0: 0, tot_d1: 0, pct_d1: 0 };
+        const agGeral = p.aging_geral || {};
+        const agNio = p.aging_nio || {};
+        const inst = p.inst || { nio: { hoje: 0, pct: 0 }, tim: { hoje: 0, pct: 0 }, demais: { hoje: 0, pct: 0 } };
+        const rep = p.rep || { nio: { hoje: 0, pct: 0 }, tim: { hoje: 0, pct: 0 }, demais: { hoje: 0, pct: 0 } };
+
+        function formatAtribBadge(obj) {
+          const cor = obj.pct >= 80 ? 'var(--accent-green)' : (obj.pct >= 60 ? 'var(--accent-yellow)' : 'var(--accent-red)');
+          return `<span style="color:#FFF; font-weight:900;">${obj.hoje}</span> <span style="font-size:11px; font-weight:700; color:${cor};">(${obj.pct.toFixed(1)}%)</span>`;
+        }
+
+        let macrosHtml = '';
+        if (p.macros) {
+          for (const [mName, mData] of Object.entries(p.macros)) {
+            const corD0 = mData.pct_d0 >= 80 ? 'var(--accent-green)' : 'var(--accent-red)';
+            const corD1 = mData.pct_d1 >= 80 ? 'var(--accent-green)' : 'var(--accent-red)';
+            macrosHtml += `
+              <div class="cockpit-macro-card">
+                <div style="color:var(--accent-blue); font-size:11.5px; font-weight:900; margin-bottom:8px; text-transform:uppercase; letter-spacing: 0.5px;">
+                  <i class="fa-solid fa-layer-group"></i> Visão: ${mName}
+                </div>
+                <div class="sub-cockpit-grid">
+                  <div class="sub-box" style="border-top:3px solid var(--accent-blue);">
+                    <div class="sub-box-title" style="color:var(--accent-blue);">📄 Atribuição D-Atual (Hoje)</div>
+                    <div class="sub-box-metrics">
+                      <div><div class="sub-metric-lbl">Hoje</div><div class="sub-metric-num">${mData.hoje}</div></div>
+                      <div><div class="sub-metric-lbl">Amanhã</div><div class="sub-metric-num">${mData.amanha}</div></div>
+                      <div><div class="sub-metric-lbl">Futuro</div><div class="sub-metric-num">${mData.futuro}</div></div>
+                      <div><div class="sub-metric-lbl">Total Geral</div><div class="sub-metric-num">${mData.tot_d0}</div></div>
+                      <div><div class="sub-metric-lbl">% Atribuída</div><div class="sub-metric-num" style="color:${corD0};">${mData.pct_d0.toFixed(1)}%</div></div>
+                    </div>
+                  </div>
+                  <div class="sub-box" style="border-top:3px solid var(--accent-yellow);">
+                    <div class="sub-box-title" style="color:var(--accent-yellow);">📄 Atribuição D+1 (Amanhã)</div>
+                    <div class="sub-box-metrics">
+                      <div><div class="sub-metric-lbl">Amanhã</div><div class="sub-metric-num">${mData.amanha}</div></div>
+                      <div><div class="sub-metric-lbl">Futuro</div><div class="sub-metric-num">${mData.futuro}</div></div>
+                      <div><div class="sub-metric-lbl">Total Base</div><div class="sub-metric-num">${mData.tot_d1}</div></div>
+                      <div><div class="sub-metric-lbl">% Atribuída</div><div class="sub-metric-num" style="color:${corD1};">${mData.pct_d1.toFixed(1)}%</div></div>
+                    </div>
+                  </div>
+                </div>
+              </div>`;
+          }
+        }
+
+        const avisoEscopo = (p.filtros_hierarquia_ignorados || []).length ? `
+          <div class="filter-scope-notice">
+            <i class="fa-solid fa-circle-info"></i>
+            <span>A base de tarefas abertas não possui vínculo para o filtro de ${p.filtros_hierarquia_ignorados.join(' e ')}. Exibindo a visão regional sem zerar o cockpit.</span>
+          </div>` : '';
+
+        root.innerHTML = `
+          <div class="cockpit-view-wrapper">
+            <div class="screen-header" style="margin-bottom:4px;">
+              <div class="screen-title" style="color: var(--accent-orange);">
+                <i class="fa-solid fa-wrench"></i> Cockpit Operacional (Atribuições) - ${regiaoTag}
+              </div>
+              <div style="font-size: 12px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; font-weight:700;">
+                Última Sincronização: ${atz}
+              </div>
+            </div>
+
+            ${avisoEscopo}
+
+            <div class="cockpit-general-banner">
+              <div>
+                <div style="color: var(--accent-yellow); font-size: 14px; font-weight: 900; text-transform: uppercase; letter-spacing:0.5px;">
+                  <i class="fa-solid fa-star"></i> Visão Geral Consolidada
+                </div>
+                <div style="font-size: 10px; color: var(--text-muted); font-weight: 700; margin-top:2px;">TODAS AS MACROS</div>
+              </div>
+
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div class="aging-strip" style="padding: 6px 12px;">
+                  <span style="font-size: 10px; font-weight: 800; color: var(--accent-yellow); text-transform: uppercase; width: 60px;">
+                    <i class="fa-solid fa-wrench"></i> Rep. Geral
+                  </span>
+                  <div class="aging-item"><div class="lbl">ATÉ 24H</div><div class="val" style="color:var(--accent-green);">${agGeral['Até 24h'] || 0}</div></div>
+                  <div class="aging-item"><div class="lbl">24-48H</div><div class="val" style="color:var(--accent-yellow);">${agGeral['24 a 48h'] || 0}</div></div>
+                  <div class="aging-item"><div class="lbl">48-72H</div><div class="val" style="color:var(--accent-red);">${agGeral['48 a 72h'] || 0}</div></div>
+                  <div class="aging-item"><div class="lbl">> 72H</div><div class="val" style="color:var(--accent-red);">${agGeral['> 72h'] || 0}</div></div>
+                </div>
+                <div class="aging-strip" style="padding: 6px 12px; background: rgba(56, 189, 248, 0.05); border-color: rgba(56, 189, 248, 0.2);">
+                  <span style="font-size: 10px; font-weight: 800; color: var(--accent-blue); text-transform: uppercase; width: 60px;">
+                    <i class="fa-solid fa-wrench"></i> Rep. NIO
+                  </span>
+                  <div class="aging-item"><div class="lbl">ATÉ 24H</div><div class="val" style="color:var(--accent-green);">${agNio['Até 24h'] || 0}</div></div>
+                  <div class="aging-item"><div class="lbl">24-48H</div><div class="val" style="color:var(--accent-yellow);">${agNio['24 a 48h'] || 0}</div></div>
+                  <div class="aging-item"><div class="lbl">48-72H</div><div class="val" style="color:var(--accent-red);">${agNio['48 a 72h'] || 0}</div></div>
+                  <div class="aging-item"><div class="lbl">> 72H</div><div class="val" style="color:var(--accent-red);">${agNio['> 72h'] || 0}</div></div>
+                </div>
+              </div>
+
+              <div style="display:flex; gap:16px; font-size:11.5px;">
+                <div>
+                  <div style="font-size:9.5px; font-weight:800; color:var(--accent-blue); text-transform:uppercase; margin-bottom:2px;">🔹 INST-FTTH (D0)</div>
+                  <div style="font-family:'JetBrains Mono';">NIO: ${formatAtribBadge(inst.nio)} | TIM: ${formatAtribBadge(inst.tim)}</div>
+                </div>
+                <div style="border-left:1px solid var(--border-light); padding-left:16px;">
+                  <div style="font-size:9.5px; font-weight:800; color:var(--accent-red); text-transform:uppercase; margin-bottom:2px;">🔸 REP-FTTH (D0)</div>
+                  <div style="font-family:'JetBrains Mono';">NIO: ${formatAtribBadge(rep.nio)} | TIM: ${formatAtribBadge(rep.tim)}</div>
+                </div>
+              </div>
+
+              <div style="display:flex; gap:16px; font-size:11px; font-family:'JetBrains Mono', monospace;">
+                <div>
+                  <div style="font-size:9px; color:var(--accent-blue); font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">Atribuição D-Atual</div>
+                  <div style="margin-top:2px;">Total: <b>${g.tot_d0}</b> <i class="fa-solid fa-arrow-right text-[9px] text-slate-500 mx-1"></i> <b style="color:${g.pct_d0 >= 80 ? 'var(--accent-green)' : 'var(--accent-red)'}; font-size:14px;">${g.pct_d0.toFixed(1)}%</b></div>
+                </div>
+                <div style="border-left:1px solid var(--border-light); padding-left:16px;">
+                  <div style="font-size:9px; color:var(--accent-yellow); font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">Atribuição D+1</div>
+                  <div style="margin-top:2px;">Total: <b>${g.tot_d1}</b> <i class="fa-solid fa-arrow-right text-[9px] text-slate-500 mx-1"></i> <b style="color:${g.pct_d1 >= 80 ? 'var(--accent-green)' : 'var(--accent-red)'}; font-size:14px;">${g.pct_d1.toFixed(1)}%</b></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="macros-container-flex">
+              ${macrosHtml}
+            </div>
+
+            <div class="chart-container-flex">
+              <div style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.5px;">
+                <i class="fa-solid fa-chart-simple"></i> Volumetria de Abertura de Reparos por Hora (Hoje)
+              </div>
+              <div style="position: absolute; top: 32px; bottom: 12px; left: 16px; right: 16px;">
+                <canvas id="grafico_hora"></canvas>
+              </div>
+            </div>
+          </div>
+        `;
+
+        if (p.vol_hora && p.vol_hora.length > 0) {
+          const ctx = document.getElementById('grafico_hora').getContext('2d');
+          let gradient = ctx.createLinearGradient(0, 0, 0, 400);
+          gradient.addColorStop(0, 'rgba(239, 68, 68, 0.9)');
+          gradient.addColorStop(1, 'rgba(239, 68, 68, 0.2)');
+
+          chartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: p.vol_hora.map(x => x.HORA_ABERTURA),
+              datasets: [{
+                data: p.vol_hora.map(x => x.VOL),
+                backgroundColor: gradient,
+                borderColor: 'rgba(239, 68, 68, 1)',
+                borderWidth: 1,
+                borderRadius: 4
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { 
+                legend: { display: false },
+                tooltip: { backgroundColor: 'rgba(15,23,42,0.9)', titleFont: {family: 'Inter'}, bodyFont: {family: 'JetBrains Mono'} }
+              },
+              scales: {
+                y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8', font: { family: 'JetBrains Mono', size: 10 } } },
+                x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { family: 'JetBrains Mono', size: 10 } } }
+              }
+            }
+          });
+        }
+        document.getElementById('marquee_texto').innerHTML = `<i class="fa-solid fa-wrench text-orange-400 mr-2"></i> COCKPIT DE ATRIBUIÇÕES - ${regiaoTag}&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;TOTAL D0: ${g.tot_d0} (${g.pct_d0}%)&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;Atualizado às ${atz}`;
+      }
+
+      else if (telaType === 'REPAROS_SETOR') {
+        const avisoEscopo = (p.filtros_hierarquia_ignorados || []).length ? `
+          <div class="filter-scope-notice"><i class="fa-solid fa-circle-info"></i><span>Filtro hierárquico indisponível na base de tarefas abertas; mantendo a visão regional.</span></div>` : '';
+        let rows = (p.setores || []).map(s => `
+          <tr>
+            <td style="font-weight: 800; color: #FFF; font-size: 13px;">${s.SETOR}</td>
+            <td class="num-mono" style="color:var(--text-main); font-weight:700;">${s.HOJE}</td>
+            <td class="num-mono" style="color:var(--text-muted);">${s.AMANHA}</td>
+            <td class="num-mono" style="color:var(--text-muted);">${s.FUTURO}</td>
+            <td class="num-mono" style="color: var(--accent-blue); font-weight: 900; background:rgba(56, 189, 248, 0.05);">${s.TOTAL}</td>
+            <td class="num-mono" style="color: ${s.PCT_D0 >= 80 ? 'var(--accent-green)' : 'var(--accent-red)'}; font-weight: 900; font-size: 13px;">${s.PCT_D0.toFixed(1)}%</td>
+            <td class="num-mono" style="color:var(--text-main);">${s.TOTAL_FUTURO}</td>
+            <td class="num-mono" style="color: ${s.PCT_FUTURA <= 30 ? 'var(--accent-green)' : 'var(--accent-yellow)'}; font-weight:700;">${s.PCT_FUTURA.toFixed(1)}%</td>
+          </tr>`).join('');
+
+        root.innerHTML = `
+          <div class="screen-header">
+            <div class="screen-title" style="color: var(--accent-blue);">
+              <i class="fa-solid fa-map-location-dot"></i> Atribuição Consolidada por Setor - ${regiaoTag}
+            </div>
+            <div style="font-size: 13px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; font-weight:700;">
+              Sincronizado: ${atz}
+            </div>
+          </div>
+
+          ${avisoEscopo}
+
+          <div class="table-container-flex" style="max-height: calc(100vh - 190px);">
+            <table class="smart-table">
+              <thead>
+                <tr>
+                  <th style="width: 30%;">Território de Serviço</th>
+                  <th class="th-right">Hoje</th>
+                  <th class="th-right">Amanhã</th>
+                  <th class="th-right">Futuro</th>
+                  <th class="th-right" style="color:var(--accent-blue);">Total Geral</th>
+                  <th class="th-right">% Atrib (D0)</th>
+                  <th class="th-right">Total Futuro</th>
+                  <th class="th-right">% Futura</th>
+                </tr>
+              </thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>
+        `;
+        document.getElementById('marquee_texto').innerHTML = `<i class="fa-solid fa-map-location text-blue-400 mr-2"></i> DISTRIBUIÇÃO TERRITORIAL - ${regiaoTag}&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;Atualizado às ${atz}`;
+        requestAnimationFrame(ajustarDimensoesTabela);
+      }
+
+      else if (telaType === 'PENDENCIAS') {
+        const maxQtd = p.max || 1;
+        let rows = (p.lista || []).map(r => {
+          const pct = ((r.QUANTIDADE / maxQtd) * 100).toFixed(0);
+          return `
+            <tr>
+              <td style="font-weight: 600; width: 50%; white-space: normal; line-height:1.4;">${r.MOTIVO}</td>
+              <td class="num-mono" style="font-weight: 900; width: 10%; color: var(--accent-red); font-size:16px;">${r.QUANTIDADE}</td>
+              <td style="width: 40%;">
+                <div class="progress-wrapper">
+                  <div class="progress-bar-bg">
+                    <div class="progress-bar-fill" style="width: ${pct}%;"></div>
+                  </div>
+                  <span style="font-size: 11px; color: var(--text-muted); font-family: 'JetBrains Mono'; font-weight:700;">${pct}%</span>
+                </div>
+              </td>
+            </tr>`;
+        }).join('');
+
+        root.innerHTML = `
+          <div class="screen-header">
+            <div class="screen-title" style="color: var(--accent-red);">
+              <i class="fa-solid fa-triangle-exclamation"></i> Diagnóstico de Pendências (Insucessos) - ${regiaoTag}
+            </div>
+            <div style="font-size: 13px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; font-weight:700;">
+              Total Mapeado: ${p.lista ? p.lista.reduce((a,b)=>a+b.QUANTIDADE,0) : 0}
+            </div>
+          </div>
+
+          <div class="table-container-flex" style="max-height: calc(100vh - 190px);">
+            <table class="smart-table">
+              <thead>
+                <tr>
+                  <th style="width: 50%;">Descrição da Ocorrência Registrada</th>
+                  <th class="th-right" style="width: 10%;">Volume</th>
+                  <th style="width: 40%; padding-left:12px;">Distribuição de Impacto</th>
+                </tr>
+              </thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>
+        `;
+        document.getElementById('marquee_texto').innerHTML = `<i class="fa-solid fa-triangle-exclamation text-red-500 mr-2"></i> ALERTAS DE PENDÊNCIA - ${regiaoTag}&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;Atualizado às ${atz}`;
+        requestAnimationFrame(ajustarDimensoesTabela);
+      }
+
+      else if (telaType === 'EXECUCAO') {
+        let rows = (p.itens || []).map(r => `
+          <tr>
+            <td style="color: #FFF; font-weight: 700;">${r.SUPERVISOR}</td>
+            <td style="font-weight: 600; color: var(--accent-blue);">${r.COLABORADOR}</td>
+            <td style="color: var(--text-muted); font-size: 11.5px; white-space: normal; line-height: 1.4;">${r.ENDERECO}</td>
+            <td class="num-mono" style="color: var(--accent-red); font-weight: 900; font-size: 15px; background:rgba(239,68,68,0.1); border-radius:6px;">${r.TEMPO}</td>
+            <td style="text-align: center;">
+              ${r.MAPA ? `<a href="${r.MAPA}" target="_blank" class="badge-route"><i class="fa-solid fa-location-arrow"></i> Mapa</a>` : '-'}
+            </td>
+          </tr>`).join('');
+
+        root.innerHTML = `
+          <div class="screen-header">
+            <div class="screen-title" style="color: var(--accent-purple);">
+              <i class="fa-solid fa-clock"></i> SLA Crítico: Execuções Alongadas (>80min) - ${regiaoTag}
+            </div>
+            <div style="font-size: 13px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; font-weight:700;">
+              Equipes Travadas: ${(p.itens || []).length}
+            </div>
+          </div>
+
+          <div class="table-container-flex" style="max-height: calc(100vh - 190px);">
+            <table class="smart-table">
+              <thead>
+                <tr>
+                  <th style="width: 20%;">Supervisor</th>
+                  <th style="width: 25%;">Técnico em Rota</th>
+                  <th style="width: 35%;">Localização do SA</th>
+                  <th class="th-right" style="width: 10%;">Tempo Decorrido</th>
+                  <th style="width: 10%; text-align: center;">Geolocalização</th>
+                </tr>
+              </thead>
+              <tbody>${rows || '<tr><td colspan="5" style="text-align:center; padding: 40px; color: var(--accent-green); font-weight: 800; font-size: 16px;"><i class="fa-solid fa-check-circle fa-2x mb-3 block"></i>Operação fluindo perfeitamente! Nenhuma equipe travada no momento.</td></tr>'}</tbody>
+            </table>
+          </div>
+        `;
+        document.getElementById('marquee_texto').innerHTML = `<i class="fa-solid fa-clock text-purple-400 mr-2"></i> TEMPO EXCEDIDO - ${regiaoTag}&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;Travados: ${(p.itens || []).length}&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;Atualizado às ${atz}`;
+        requestAnimationFrame(ajustarDimensoesTabela);
+      }
+
+      else if (telaType === 'ZERADOS') {
+        let rows = (p.lista || []).map(r => `
+          <tr class="sup-row">
+            <td><div style="color:var(--text-muted); font-weight:600;"><i class="fa-solid fa-users text-teal-600 mr-2"></i>${r.GERENTE}</div></td>
+            <td><div style="font-weight: 700; color:var(--text-main);"><i class="fa-solid fa-arrow-turn-up fa-rotate-90 text-slate-600 mr-2" style="font-size:10px;"></i>${r.SUPERVISOR}</div></td>
+            <td style="color: #FFF; font-weight: 800; font-size: 13px;"><i class="fa-solid fa-user-xmark mr-2 text-slate-500"></i>${r.TECNICO}</td>
+            <td class="num-mono" style="color: var(--accent-blue); font-weight:700;">${r.MO_ATIVA}</td>
+            <td class="num-mono" style="color: var(--accent-red); font-weight: 900; font-size:14px;">${r.QTD_ZERADOS}</td>
+            <td class="num-mono" style="color: ${r.PCT_ZERADOS >= 40 ? 'var(--accent-red)' : 'var(--accent-yellow)'}; font-weight: 900;">${r.PCT_ZERADOS.toFixed(1)}%</td>
+          </tr>`).join('');
+
+        root.innerHTML = `
+          <div class="screen-header">
+            <div class="screen-title" style="color: var(--accent-yellow);">
+              <i class="fa-solid fa-user-slash"></i> Ofensores de Produtividade (Zerados) - ${regiaoTag}
+            </div>
+            <div style="font-size: 13px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; font-weight:700;">
+              Sincronizado: ${atz}
+            </div>
+          </div>
+
+          <div class="kpi-deck">
+            <div class="kpi-card b-blue"><span class="kpi-label">Efetivo Operacional Base</span><span class="kpi-val">${p.tot_mo}</span></div>
+            <div class="kpi-card b-red"><span class="kpi-label">Colaboradores S/ Produção</span><span class="kpi-val" style="color: var(--accent-red);">${p.tot_zer}</span></div>
+            <div class="kpi-card b-yellow"><span class="kpi-label">% Ociosidade Regional</span><span class="kpi-val" style="color: var(--accent-yellow);">${p.pct_geral}%</span></div>
+            <div class="kpi-card b-green"><span class="kpi-label">Efetivo Entregando (Real)</span><span class="kpi-val" style="color: var(--accent-green);">${p.tot_mo - p.tot_zer}</span></div>
+          </div>
+
+          <!-- CONTAINER COM SCROLL TOTALMENTE LIBERADO -->
+          <div class="table-container-flex" style="max-height: calc(100vh - 220px); overflow-y: auto !important;">
+            <table class="smart-table">
+              <thead>
+                <tr>
+                  <th style="width: 20%;">Coordenação</th>
+                  <th style="width: 25%;">Supervisão Responsável</th>
+                  <th style="width: 31%;">Técnico Pendente</th>
+                  <th class="th-right" style="width: 8%;">MO Sup.</th>
+                  <th class="th-right" style="width: 8%;">Vol. Zerados</th>
+                  <th class="th-right" style="width: 8%;">% Impacto</th>
+                </tr>
+              </thead>
+              <tbody>${rows || '<tr><td colspan="6" style="text-align:center; padding: 24px; color: var(--accent-green); font-weight: bold;">Todos os técnicos apresentam produção ativa.</td></tr>'}</tbody>
+            </table>
+          </div>
+        `;
+        document.getElementById('marquee_texto').innerHTML = `<i class="fa-solid fa-user-slash text-yellow-400 mr-2"></i> ÍNDICE DE ZERADOS - ${regiaoTag}&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;Total Zerados: ${p.tot_zer} (${p.pct_geral}%)&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;Atualizado às ${atz}`;
+        requestAnimationFrame(ajustarDimensoesTabela);
+      }
+    }
+
+    // LISTENER PARA DESPERTAR TELA (EVITA REQUISIÇÕES TRAVADAS AO VOLTAR PARA A ABA)
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        if (modoRotacao) {
+          reiniciarRotacao();
+        } else {
+          carregarTelaAtualManual();
+        }
+      }
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      aplicarPreferenciaVisual();
+      if (window.innerWidth <= 768 && !document.body.classList.contains('forced-desktop')) fecharSidebarMobile();
+
+      const parametros = new URLSearchParams(location.search);
+      const telaInicial = parametros.get('tela');
+      const regiaoInicial = parametros.get('regiao');
+      if (['NORTE', 'SUL'].includes(regiaoInicial)) {
+        document.getElementById(`btn_reg_${regiaoInicial.toLowerCase()}`).classList.add('active');
+      }
+      if (telaInicial && [...document.getElementById('modo_exibicao').options].some(opcao => opcao.value === telaInicial)) {
+        modoRotacao = false;
+        document.getElementById('modo_exibicao').value = telaInicial;
+        document.querySelectorAll('.mobile-nav-btn[data-tela]').forEach(el => el.classList.toggle('active', el.dataset.tela === telaInicial));
+      }
+
+      new MutationObserver(() => requestAnimationFrame(prepararTabelasMobile)).observe(document.getElementById('painel_principal'), { childList: true, subtree: true });
+      atualizarFiltros();
+      if (modoRotacao) carregarTelaAutomatica(); else carregarTelaAtualManual();
+
+      if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(erro => console.warn('PWA indisponível:', erro));
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="72" y1="64" x2="440" y2="456" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#102033"/><stop offset="1" stop-color="#050a12"/>
+    </linearGradient>
+    <linearGradient id="signal" x1="139" y1="121" x2="377" y2="391" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#5eead4"/><stop offset="1" stop-color="#38bdf8"/>
+    </linearGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="7"/></filter>
+  </defs>
+  <rect width="512" height="512" rx="118" fill="url(#bg)"/>
+  <rect x="18" y="18" width="476" height="476" rx="102" fill="none" stroke="#24374d" stroke-width="4"/>
+  <path d="M138 220c20-45 65-76 118-76s98 31 118 76M175 237c15-29 45-49 81-49s66 20 81 49" fill="none" stroke="#38bdf8" stroke-width="22" stroke-linecap="round" opacity=".2" filter="url(#glow)"/>
+  <path d="M138 220c20-45 65-76 118-76s98 31 118 76M175 237c15-29 45-49 81-49s66 20 81 49" fill="none" stroke="url(#signal)" stroke-width="18" stroke-linecap="round"/>
+  <circle cx="256" cy="267" r="28" fill="#fbbf24"/>
+  <path d="M256 295v83M196 378h120" fill="none" stroke="#e6f7ff" stroke-width="20" stroke-linecap="round"/>
+  <circle cx="196" cy="378" r="18" fill="#2dd4bf"/><circle cx="316" cy="378" r="18" fill="#38bdf8"/>
+  <path d="M256 327 196 378M256 327l60 51" fill="none" stroke="#e6f7ff" stroke-width="12" stroke-linecap="round"/>
+</svg>
